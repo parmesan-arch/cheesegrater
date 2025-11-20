@@ -4,7 +4,6 @@ import sys
 import os
 import parse
 import eval_fns
-import pprint
 
 WHEEL_VERSION = 2
 PROCESSOR_START_ADDR = 0xF000
@@ -41,28 +40,31 @@ statements = []
 # We also build the label table here.
 with open(in_path, "r") as infile:
     for line in infile:
-        print(line.strip())
         # print(current_offset)
-        parsed = parse.parse_line(line.strip())
-        if parsed is None:
+        try:
+            statement = parse.parse_line(line.strip())
+        except SyntaxError as e:
+            print(e)
+            sys.exit(1)
+        if statement is None:
             continue
-        if "size" not in parsed:
-            parsed["size"] = 0
-        if parsed["type"] == "label":
-            label = parsed["label"]
+        if "size" not in statement:
+            statement["size"] = 0
+        if statement["type"] == "label":
+            label = statement["label"]
             if label in labels:
                 raise SyntaxError("Duplicate label %s!" % statement["label"])
             labels[label] = current_offset
-        elif parsed["type"] == "seek":
-            current_offset = parsed["seek"]
-        elif parsed["type"] == "align":
+        elif statement["type"] == "seek":
+            current_offset = statement["seek"]
+        elif statement["type"] == "align":
             current_offset = (
-                (current_offset + parsed["align"] - 1) // parsed["align"]
-            ) * parsed["align"]
+                (current_offset + statement["align"] - 1) // statement["align"]
+            ) * statement["align"]
         else:
-            current_offset += parsed["size"]
+            current_offset += statement["size"]
 
-        statements.append(parsed)
+        statements.append(statement)
         # print("\t", parsed)
 
 # pprint.pprint(statements)
@@ -107,20 +109,12 @@ with open(out_path, "wb") as file:
     print("assembling")
 
     for statement in statements:
-
         if statement["type"] == "instruction":
             # patch label jumps if needed
-            if statement["instr_type"] == "jump_call":
-                # print(file.tell() - block_start)
-                print(statement)
-                print(current_offset)
             if (
                 "branch_dest" in statement
                 and statement["branch_dest"]["type"] == "LABEL"
             ):
-                print(
-                    f"Patching a jump to label {statement["branch_dest"]["dest"]}, the destination is {labels[statement["branch_dest"]["dest"]]}"
-                )
                 statement["branch_dest"]["dest"] = labels[
                     statement["branch_dest"]["dest"]
                 ]

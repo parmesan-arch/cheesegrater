@@ -1,0 +1,63 @@
+; load special address into %ix
+  MOVL %ix, $69
+  MOVH %ix, $69
+
+
+
+; let ax have our input variable
+  MOVL %ax, $34
+  MOVH %ax, $12
+
+  CALL POPCOUNT
+  STOREW %ax, [%ix]
+
+  MOVL %ax, $11
+  MOVH %ax, $11
+
+  CALL POPCOUNT
+  STOREW %ax, [%ix]
+
+  MOVL %ax, $FF
+  MOVH %ax, $FF
+
+  CALL POPCOUNT
+  STOREW %ax, [%ix]
+
+  MOVL %ax, $66
+  MOVH %ax, $66
+
+  CALL POPCOUNT
+  STOREW %ax, [%ix]
+
+
+
+DONE:
+  HALT
+
+
+POPCOUNT:
+  MOV %bx, %ax
+  LSR %bx, #1
+  AND %ax, $5555
+  AND %bx, $5555
+  ADD %ax, %bx
+
+  MOV %bx, %ax
+  LSR %bx, #2
+  AND %ax, $3333
+  AND %bx, $3333
+  ADD %ax, %bx
+
+  MOV %bx, %ax
+  LSR %bx, #4
+  AND %ax, $0F0F
+  AND %bx, $0F0F
+  ADD %ax, %bx
+
+  MOV %bx, %ax
+  LSR %bx, #8
+  AND %ax, $00FF
+  AND %bx, $00FF
+  ADD %ax, %bx
+
+  RET

@@ -1,5 +1,6 @@
 import lex
 import parse_lookups
+from typing import cast
 
 
 def expect(condition, error, error_str):
@@ -68,7 +69,7 @@ def parse_instr_statement(lexer: lex.lexer):
     statement["type"] = "instruction"
     statement["size"] = 2
     # first token is the instruction opcode string
-    statement["opcode"] = lexer.curr_tok.val.upper()
+    statement["opcode"] = cast(str, lexer.curr_tok.val).upper()
     # print("found instruction with opcode of %s" % statement["opcode"])
     # consume opcode token
     lexer.advance()
@@ -93,7 +94,7 @@ def parse_instr_statement(lexer: lex.lexer):
             SyntaxError,
             "Expected condition code following period in J.cc instruction",
         )
-        statement["condition_code"] = lexer.curr_tok.val.upper()
+        statement["condition_code"] = cast(str, lexer.curr_tok.val).upper()
         lexer.advance()
         # Looking for one label
         expect(
@@ -190,57 +191,57 @@ def parse_directive_statement(lexer: lex.lexer):
     expect(lexer.curr_tok.type == "IDENTIFIER", SyntaxError, "Expected a directive following a dot.")
     statement = {}
     statement["type"] = "directive"
-    directive = lexer.curr_tok.val.lower()
+    directive = cast(str, lexer.curr_tok.val).lower()
     if directive == "ascii":
         expect(lexer.lookahead_tok.type == "STRING", SyntaxError, "Expected a string literal following a .ascii directive.")
         statement["subtype"] = "bytes"
         lexer.advance()
-        statement["bytes"] = lexer.curr_tok.val.encode("ascii")
+        statement["bytes"] = cast(str, lexer.curr_tok.val).encode("ascii")
         statement["size"] = len(statement["bytes"])
         return statement
     elif directive == "asciiz":
         expect(lexer.lookahead_tok.type == "STRING", SyntaxError, "Expected a string literal following a .asciiz directive.")
         statement["subtype"] = "bytes"
         lexer.advance()
-        statement["bytes"] = lexer.curr_tok.val.encode("ascii") + b'\0'
+        statement["bytes"] = cast(str, lexer.curr_tok.val).encode("ascii") + b'\0'
         statement["size"] = len(statement["bytes"])
         return statement
     elif directive == "byte":
         expect(lexer.lookahead_tok.type == "NUMBER", SyntaxError, "Expected at least one numerical literal following a .byte directive.")
         statement["subtype"] = "bytes"
         lexer.advance()
-        statement["bytes"] = lexer.curr_tok.val.to_bytes(1, "little")
+        statement["bytes"] = cast(int, lexer.curr_tok.val).to_bytes(1, "little")
         while lexer.lookahead_tok.type == "COMMA":
             lexer.advance()
             lexer.advance()
-            statement["bytes"] += lexer.curr_tok.val.to_bytes(1, "little")
+            statement["bytes"] += cast(int, lexer.curr_tok.val).to_bytes(1, "little")
         statement["size"] = len(statement["bytes"])
         return statement
     elif directive == "word":
         expect(lexer.lookahead_tok.type == "NUMBER", SyntaxError, "Expected at least one numerical literal following a .word directive.")
         statement["subtype"] = "bytes"
         lexer.advance()
-        statement["bytes"] = lexer.curr_tok.val.to_bytes(2, "little")
+        statement["bytes"] = cast(int, lexer.curr_tok.val).to_bytes(2, "little")
         while lexer.lookahead_tok.type == "COMMA":
             lexer.advance()
             lexer.advance()
-            statement["bytes"] += lexer.curr_tok.val.to_bytes(2, "little")
+            statement["bytes"] += cast(int, lexer.curr_tok.val).to_bytes(2, "little")
         statement["size"] = len(statement["bytes"])
         return statement
     elif directive == "seek":
         expect(lexer.lookahead_tok.type == "NUMBER", SyntaxError, "Expected an offset after seek directive.")
         lexer.advance()
         statement["subtype"] = "seek"
-        statement["seek"] = lexer.curr_tok.val % 65536
+        statement["seek"] = cast(int, lexer.curr_tok.val) % 65536
         return statement
     elif directive == "align":
         expect(lexer.lookahead_tok.type == "NUMBER", SyntaxError, "Expected an alignment boundary value following .align directive.")
         lexer.advance()
         statement["subtype"] = "align"
-        statement["align"] = lexer.curr_tok.val
+        statement["align"] = cast(int, lexer.curr_tok.val)
         if lexer.lookahead_tok.type == "NUMBER":
             lexer.advance()
-            statement["fill"] = (lexer.curr_tok.val % 256).to_bytes(1, "little")
+            statement["fill"] = (cast(int, lexer.curr_tok.val) % 256).to_bytes(1, "little")
         else:
             statement["fill"] = b'\0'
         return statement

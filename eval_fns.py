@@ -110,10 +110,21 @@ def eval_ri_format(statement):
     # resolve aluop bits
     opbits = BitArray(uint=0b00010, length=5)
     alu_opint = eval_lookups.ALU_RI_ALUOP_BITS[statement["opcode"]]
-    imm_bits = BitArray(uint=imm_int, length=4)
+    if statement["opcode"] in ["LSL", "LSR"]:
+        # shift amount is 4 bits
+        imm_bits = BitArray(uint=imm_int, length=5)
+    elif statement["opcode"] in ["AND", "OR", "XOR"]:
+        # todo: this will be a table lookup.
+        if imm_int not in eval_lookups.BITMASKS_LOOKUPS:
+            raise SyntaxError(
+                "Immediate 0x%X cannot be encoded for %s instruction!"
+                % (imm_int, statement["opcode"])
+            )
+        imm_bits = BitArray(uint=eval_lookups.BITMASKS_LOOKUPS.index(imm_int), length=5)
+    else:
+        imm_bits = BitArray(uint=imm_int, length=5)
     alu_opbits = BitArray(uint=alu_opint, length=3)
-    h_bit = BitArray(uint=0, length=1)
-    return opbits + alu_opbits + h_bit + imm_bits + dst_bits
+    return opbits + alu_opbits + imm_bits + dst_bits
 
 
 INSTR_TYPE_TO_EVAL_FN = {

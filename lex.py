@@ -4,14 +4,12 @@ DIGITS_AND_SIGN = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-"]
 class tok:
     def __init__(self) -> None:
         self.type = ""
-        self.val = None
+        self.val: str | int = ""
 
 
 class lexer:
     def __init__(self, in_str) -> None:
         self.input_str = in_str
-        self.curr_tok = None
-        self.lookahead_tok = None
         self.char_index = 0
         self.eol = False
         self.current_char = self.input_str[0]
